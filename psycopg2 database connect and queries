@@ -1,0 +1,72 @@
+ #table_name = 'Alb'  - 75
+#district_id = '3500060' - 5
+
+from pathlib import Path
+import os
+
+# Directory = Fodler name in school_scrapes
+
+directory = input(print("Enter Desired Folder Name: "))
+
+#Parent Directory path
+parent_dir = r"C:\Users\MA0UOMA\Documents\School_Scrapes"
+
+# Path
+path = os.path.join(parent_dir, directory)
+
+try:
+    os.makedirs(path, exist_ok=True)
+    print("Directory '%s' created successfully" % directory)
+except OSError as error:
+    print("Directory '%s' can not be created" % directory)
+
+Path.cwd()
+os.chdir(path)
+
+import psycopg2
+import csv
+
+db_params_prime = {'user': "",
+                   'password': "",
+                   'host': "",
+                   'port': "",
+                   'database': "}
+db_params = {'user': "",
+             'password': "learning",
+             'host': "",
+             'port': "",
+             'database': ""}
+             
+import os
+
+# detect the current working directory and print it
+path = os.getcwd()
+print ("The current working directory is %s" % path)
+
+
+
+try:
+    with psycopg2.connect( **db_params ) as conn, conn.cursor() as cursor, \
+            open( 'Alb_school_nm_mismatches.csv', 'w' ) as csv_file:
+        postgreSQL_select_Query = """
+          SELECT pts.school_nm, pts.nces_schid, saz.nces_schid, saz.school_nm 
+          FROM mtm.our_shelby pts
+          JOIN mtm.our_shelbysaz saz
+          ON pts.nces_schid = saz.nces_schid
+          where pts.nces_disid = '3500060' and pts.school_nm != saz.school_nm;
+
+            """
+        cursor.execute( postgreSQL_select_Query )
+        Alb_school_nm_mismatches = cursor.fetchall()
+        print( "Total rows are: ", len( Alb_school_nm_mismatches ) )
+        headers = [ 'school_nm', 'nces_schid', 'school_nm', 'nces_schid',]
+        reader = csv.DictReader( Alb_school_nm_mismatches, delimiter=",", quotechar='"' )
+        writer = csv.writer( csv_file )
+        writer.writerow( headers )
+        for row in Alb_school_nm_mismatches:
+            writer.writerow( row )
+
+        print( 'Alb_school_nm_mismatches csv is saved' )
+
+except (Exception, psycopg2.Error) as error:
+    print( "Error while fetching data from PostgreSQL", error )
